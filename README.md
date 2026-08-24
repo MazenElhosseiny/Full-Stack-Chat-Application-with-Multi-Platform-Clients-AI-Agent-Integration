@@ -212,6 +212,11 @@ client = OpenAI(
 )
 ```
 
+The Containerfile already installs `zstd` alongside `curl` — the Ollama
+installer switched to zstd-compressed packages and aborts mid-build
+(`This version requires zstd for extraction`) without it. If you rewrote
+the Containerfile, keep both packages in the `apt-get install` line.
+
 ## Testing
 
 ```bash

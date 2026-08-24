@@ -1,7 +1,8 @@
 FROM docker.io/library/python:3.12-slim
 
-# Install Ollama
-RUN apt-get update && apt-get install -y curl && \
+# Install Ollama (zstd is required by the Ollama installer — its package
+# switched to zstd compression; without it the install aborts mid-build)
+RUN apt-get update && apt-get install -y curl zstd && \
     curl -fsSL https://ollama.com/install.sh | sh && \
     rm -rf /var/lib/apt/lists/*
 
