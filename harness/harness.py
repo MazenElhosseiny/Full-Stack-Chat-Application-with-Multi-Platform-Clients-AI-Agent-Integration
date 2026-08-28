@@ -332,4 +332,4 @@ def main():
 
 
 if __name__ == '__main__':
-    main()’TOOL_IMPLS[u2019http_getu2019] = tool_http_get’
+    main()
