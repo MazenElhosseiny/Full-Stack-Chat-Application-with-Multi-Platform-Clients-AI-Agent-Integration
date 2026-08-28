@@ -1,7 +1,7 @@
 # Week 8 Lab Report: AI Agent Harness
 
-**Name:**
-**Date:**
+**Name: Mazen Elhosseiny **
+**Date: 08/27/2026 **
 
 ## Stage 1 — Bare Process
 
