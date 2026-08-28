@@ -132,18 +132,17 @@ def tool_read_file(path: str) -> str:
     The contract: always return a string — file contents on success, an
     error message on failure. The model reads errors too.
     """
-    # try:
-    #     1. open path in text mode
-    #     2. read it, return the contents
-    # except FileNotFoundError:
-    #     3. return an error that names the path
-    # except PermissionError:
-    #     4. return an error that names the path
-    # except IsADirectoryError:
-    #     5. return an error that names the path
-    # except UnicodeDecodeError:
-    #     6. return an error that names the path
-    pass
+    try:
+        with open(path, 'r') as f:
+            return f.read()
+    except FileNotFoundError:
+        return f"Error: file not found at path '{path}'"
+    except PermissionError:
+        return f"Error: permission denied reading '{path}'"
+    except IsADirectoryError:
+        return f"Error: '{path}' is a directory, not a file"
+    except UnicodeDecodeError:
+        return f"Error: could not decode '{path}' as text (binary file?)"
 
 
 def tool_write_file(path: str, content: str) -> str:
@@ -152,14 +151,15 @@ def tool_write_file(path: str, content: str) -> str:
     The contract: always return a string — a confirmation with a byte count
     on success, an error message on failure.
     """
-    # try:
-    #     1. pull the parent directory out of path (os.path)
-    #     2. create it (os.makedirs + the "already exists is fine" flag)
-    #     3. open path for writing, write the content
-    #     4. return a confirmation with a byte count
-    # except OSError:
-    #     5. return the error as a string
-    pass
+    try:
+        parent = os.path.dirname(path)
+        if parent:
+            os.makedirs(parent, exist_ok=True)
+        with open(path, 'w') as f:
+            f.write(content)
+        return f"Wrote {len(content.encode())} bytes to '{path}'"
+    except OSError as e:
+        return f"Error writing to '{path}': {e}"
 
 
 def tool_run_command(command: str) -> str:
@@ -169,13 +169,17 @@ def tool_run_command(command: str) -> str:
     success and on failure. Use subprocess.run() with timeout=30 and
     capture_output=True.
     """
-    # try:
-    #     1. call subprocess.run with the flags above
-    #     2. build one labeled string: "Output: ...\nErrors: ..."
-    #     3. return it
-    # except subprocess.TimeoutExpired:
-    #     4. return the timeout as text
-    pass
+    try:
+        result = subprocess.run(
+            command,
+            shell=True,
+            capture_output=True,
+            text=True,
+            timeout=30,
+        )
+        return f"Output: {result.stdout}\nErrors: {result.stderr}"
+    except subprocess.TimeoutExpired:
+        return "Error: command timed out after 30 seconds"
 
 
 # --- Step 6b: Tool Registry (maps tool name → function) ---
@@ -224,19 +228,33 @@ def run_agent(user_message: str) -> str:
         {'role': 'user', 'content': user_message},
     ]
 
-    # TODO: Implement the loop
-    # 1. Loop up to MAX_ITERATIONS times
-    # 2. Call call_llm(messages) to get the LLM response
-    # 3. Append the response message to messages
-    # 4. If the response has no tool_calls, return response.content
-    # 5. For each tool call:
-    #    - Get the tool name and arguments
-    #    - Look up the implementation in TOOL_IMPLS
-    #    - Execute it (catch errors and return error messages)
-    #    - Append a {"role": "tool", "tool_call_id": ..., "content": result}
-    # 6. If the loop exhausts, return "Max iterations reached"
+    for _ in range(MAX_ITERATIONS):
+        response = call_llm(messages)
+        messages.append(response)
 
-    return "Agent loop not yet implemented"
+        if not response.tool_calls:
+            return response.content
+
+        for tool_call in response.tool_calls:
+            tool_name = tool_call.function.name
+            tool_args = json.loads(tool_call.function.arguments)
+
+            impl = TOOL_IMPLS.get(tool_name)
+            if impl is None:
+                result = f"Error: unknown tool '{tool_name}'"
+            else:
+                try:
+                    result = impl(**tool_args)
+                except Exception as e:
+                    result = f"Error executing {tool_name}: {e}"
+
+            messages.append({
+                'role': 'tool',
+                'tool_call_id': tool_call.id,
+                'content': result,
+            })
+
+    return "Max iterations reached"
 
 
 # --- Self-Reload (Stage 3) ---
@@ -314,4 +332,4 @@ def main():
 
 
 if __name__ == '__main__':
-    main()
+    main()’TOOL_IMPLS[u2019http_getu2019] = tool_http_get’

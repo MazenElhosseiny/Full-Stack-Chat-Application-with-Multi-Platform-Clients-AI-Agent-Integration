@@ -1,0 +1,44 @@
+services:
+  nginx:
+    build: ./nginx
+    ports:
+      - "8080:80"
+    depends_on:
+      - api
+    volumes:
+      - ./static:/usr/share/nginx/html:ro
+  api:
+    build: ./api
+    expose:
+      - "8080"
+    volumes:
+      - ./data:/app/data
+    env_file:
+      - ./api/.env
+
+  harness:
+    build: ./harness
+    expose:
+      - "9090"
+
+    volumes:
+      - ollama-models:/root/.ollama
+      - ./harness:/app
+  
+  # --- Containerized Database Option ---
+  # Uncomment the db service below and the volumes section
+  # if you want to use Postgres instead of SQLite.
+  # Also set DATABASE_URL in the api environment above.
+  # db:
+  #   image: docker.io/library/postgres:16
+  #   environment:
+  #     POSTGRES_USER: chat
+  #     POSTGRES_PASSWORD: chatpass
+  #     POSTGRES_DB: chat
+  #   volumes:
+  #     - pgdata:/var/lib/postgresql/data
+  #   expose:
+  #     - "5432"
+volumes:
+  ollama-models:
+#   pgdata:
