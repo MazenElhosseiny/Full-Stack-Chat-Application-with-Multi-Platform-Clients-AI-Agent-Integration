@@ -71,3 +71,9 @@ Python · Ollama · `llama3.2:3b` · OpenAI Python library (as an OpenAI-compati
 ## Notes on production use
 
 Running local inference (Ollama) is ideal for development — free, offline, fully inspectable. A production deployment would swap in a hosted model provider (any OpenAI-compatible API) via environment variables alone, with no code changes required. Self-modification in production would also need real safeguards this learning version doesn't have: diff review before restart, sandboxed validation of new code, and checkpointing before any self-modifying run.
+
+
+Demo:
+
+
+https://github.com/user-attachments/assets/c155e7b2-4563-4b65-a978-e25399267d30
