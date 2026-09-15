@@ -22,14 +22,6 @@ This is the same fundamental architecture behind tools like Claude Code and GitH
 
 Each tool always returns a string — including on failure — so the model can see and reason about errors rather than the process crashing.
 
-## Three stages of progression
-
-**Stage 1 — Bare process.** Run directly on the host. Demonstrates that without a sandbox, an agent with these tools has full access to the machine — nothing technical stops a destructive command from succeeding.
-
-**Stage 2 — Sandboxed.** Run inside a Podman container. The agent can execute the exact same commands, but the container's filesystem namespace means destructive actions only affect the container's own isolated filesystem — the host is untouched.
-
-**Stage 3 — Self-modifying.** With the source code mounted into the running container, the agent can rewrite its own `harness.py` — for example, adding a brand-new tool it wasn't given at build time. The harness detects the change and restarts itself with the new code, live.
-
 ## Architecture
 
 ```
