@@ -83,29 +83,17 @@ def auth():
     body = request.get_json(silent=True) or {}
     provided_password = body.get('password', '')
 
-    # TODO: Look up the stored password hash from the database and verify
-    #       the provided password against it.
-    #       Return 401 if they don't match.
-    #       Hint:
-    #         db = get_db()
-    #         row = db.execute('SELECT password_hash FROM auth WHERE id = 1').fetchone()
-    #         if not row or not check_password_hash(row['password_hash'], provided_password):
-    #             return jsonify({"error": "Invalid password"}), 401
+    # Look up the stored password hash from the database and verify the provided password against it.
+    # Return 401 if they don't match.
+    
     db = get_db()
     row = db.execute('SELECT password_hash FROM auth WHERE id = 1').fetchone()
     if not row or not check_password_hash(row['password_hash'], provided_password):
         return jsonify({"error": "Invalid password"}), 401
 
-    # TODO: Build a JWT payload with "sub", "iat", and "exp" (1 hour from now).
-    #       Sign it with app.config['SECRET_KEY'] using HS256.
-    #       Hint:
-    #         now = datetime.datetime.now(datetime.timezone.utc)
-    #         payload = {
-    #             "sub": "chat-user",
-    #             "iat": now,
-    #             "exp": now + datetime.timedelta(hours=1),
-    #         }
-    #         token = jwt.encode(payload, app.config['SECRET_KEY'], algorithm='HS256')
+    # A JWT payload with "sub", "iat", and "exp" (1 hour from now).
+    # Sign it with app.config['SECRET_KEY'] using HS256.
+    
     now = datetime.datetime.now(datetime.timezone.utc)
     payload = {
         "sub": "chat-user",
@@ -114,20 +102,8 @@ def auth():
     }
     token = jwt.encode(payload, app.config['SECRET_KEY'], algorithm='HS256')
 
-    # TODO: Return the token in JSON AND as an httpOnly cookie.
-    #       Use make_response() and set_cookie() as shown below.
-    #
-    #       response = make_response(jsonify({"token": token}), 200)
-    #       response.set_cookie(
-    #           "auth_token",
-    #           token,
-    #           httponly=True,    # JavaScript cannot read this cookie
-    #           secure=True,      # HTTPS only (Sprites.dev). In local dev over HTTP,
-    #                             # the cookie won't be set — use the Bearer header instead.
-    #           samesite="None",  # allows cross-origin in dev; harmless in prod (same origin)
-    #           max_age=3600,     # 1 hour — matches JWT expiry
-    #       )
-    #       return response
+    # Return the token in JSON AND as an httpOnly cookie.
+    
     response = make_response(jsonify({"token": token}), 200)
     response.set_cookie(
         "auth_token",
@@ -148,20 +124,14 @@ def verify_jwt():
     Allows /auth, /, and OPTIONS (CORS preflight) without a token.
     """
     # Allow auth, index, and CORS preflight without a token
+    
     if request.path in ('/auth', '/') or request.path.startswith('/assets/') or request.method == 'OPTIONS':
         return
 
-    # TODO: Extract the token from the Authorization header or the auth_token cookie.
-    #       Check "Authorization: Bearer <token>" first, then fall back to the cookie.
-    #       Return 401 if no token is found.
-    #       Hint:
-    #         auth_header = request.headers.get("Authorization", "")
-    #         if auth_header.startswith("Bearer "):
-    #             token = auth_header[len("Bearer "):]
-    #         else:
-    #             token = request.cookies.get("auth_token")
-    #             if not token:
-    #                 return jsonify({"error": "Missing token"}), 401
+    # Extract the token from the Authorization header or the auth_token cookie.
+    # Check "Authorization: Bearer <token>" first, then fall back to the cookie.
+    # Return 401 if no token is found.
+    
     auth_header = request.headers.get("Authorization", "")
     if auth_header.startswith("Bearer "):
         token = auth_header[len("Bearer "):]
@@ -170,16 +140,10 @@ def verify_jwt():
         if not token:
             return jsonify({"error": "Missing token"}), 401
 
-    # TODO: Verify the JWT using jwt.decode().
-    #       Catch jwt.ExpiredSignatureError and jwt.InvalidTokenError.
-    #       Return 401 for each case.
-    #       Hint:
-    #         try:
-    #             jwt.decode(token, app.config['SECRET_KEY'], algorithms=["HS256"])
-    #         except jwt.ExpiredSignatureError:
-    #             return jsonify({"error": "Token expired"}), 401
-    #         except jwt.InvalidTokenError:
-    #             return jsonify({"error": "Invalid token"}), 401
+    # Verify the JWT using jwt.decode().
+    # Catch jwt.ExpiredSignatureError and jwt.InvalidTokenError.
+    # Return 401 for each case.
+
     try:
         jwt.decode(token, app.config['SECRET_KEY'], algorithms=["HS256"])
     except jwt.ExpiredSignatureError:
@@ -323,7 +287,7 @@ def index():
     from flask import send_from_directory
     return send_from_directory('../static', 'index.html')
 
-@app.route('/assets/<path:filename>') # I needed to run this in order to avoid 404 errors from happening.
+@app.route('/assets/<path:filename>')
 def serve_assets(filename):
     from flask import send_from_directory
     return send_from_directory('../static/assets', filename)
