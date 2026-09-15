@@ -1,5 +1,5 @@
 """
-CSC 6304 — Week 8: AI Agent Harness
+AI Agent Harness
 
 A Claude Code-like agent that:
 1. Receives prompts via HTTP
@@ -10,10 +10,6 @@ A Claude Code-like agent that:
 5. Feeds results back to the LLM in an agent loop
 6. Returns the final response
 
-Three stages of progression:
-  Stage 1: Run directly on host (see the danger)
-  Stage 2: Run in a container (see the safety)
-  Stage 3: Self-modifying (see the power)
 """
 
 import json
@@ -34,7 +30,7 @@ API_KEY = os.environ.get('MODEL_API_KEY', 'ollama')
 HARNESS_PORT = int(os.environ.get('HARNESS_PORT', '9090'))
 MAX_ITERATIONS = 10
 
-# --- OpenAI Client (slides: "The Shape of the Conversation") ---
+# --- OpenAI Client ---
 client = OpenAI(
     base_url=f"{OLLAMA_URL}/v1",
     api_key=API_KEY,  # 'ollama' is a placeholder — local Ollama ignores it
@@ -60,7 +56,7 @@ Important:
 - You are running in a sandbox — you cannot harm the host machine"""
 
 
-# --- Step 5a: Tool Schemas (GIVEN — do not modify) ---
+# --- Step 5a: Tool Schemas ---
 # These describe the tools to the LLM. The model sees these schemas
 # and decides when to call each tool based on the descriptions.
 
@@ -123,8 +119,7 @@ TOOLS = [
 ]
 
 
-# --- Step 3 + project work: Tool Implementations (YOU BUILD) ---
-# TODO: Implement these three tools
+# --- Tool Implementations ---
 
 def tool_read_file(path: str) -> str:
     """Read and return the contents of a file.
@@ -182,7 +177,7 @@ def tool_run_command(command: str) -> str:
         return "Error: command timed out after 30 seconds"
 
 
-# --- Step 6b: Tool Registry (maps tool name → function) ---
+# --- Tool Registry ---
 # Maps tool names to their implementations
 TOOL_IMPLS = {
     'read_file': tool_read_file,
@@ -191,7 +186,7 @@ TOOL_IMPLS = {
 }
 
 
-# --- Step 1: Call the LLM ---
+# --- Call the LLM ---
 
 def call_llm(messages: list[dict]) -> object:
     """
@@ -209,8 +204,7 @@ def call_llm(messages: list[dict]) -> object:
     return response.choices[0].message
 
 
-# --- Steps 6a–6b: The Agent Loop (YOU BUILD — the heart of the project) ---
-# TODO: Implement the main agent loop
+# --- The Agent Loop ---
 
 def run_agent(user_message: str) -> str:
     """
@@ -257,11 +251,7 @@ def run_agent(user_message: str) -> str:
     return "Max iterations reached"
 
 
-# --- Self-Reload (Stage 3) ---
-# If the agent modifies this file (write_file on harness.py), the change is
-# detected and the process re-execs itself so the new tool takes effect on the
-# next request. Without this, a running Python process never picks up edits to
-# its own source.
+# --- Self-Reload ---
 SOURCE_FILE = os.path.abspath(__file__)
 SOURCE_MTIME = os.path.getmtime(SOURCE_FILE)
 
@@ -270,7 +260,7 @@ def source_has_changed() -> bool:
     return os.path.getmtime(SOURCE_FILE) != SOURCE_MTIME
 
 
-# --- Step 4: HTTP Endpoint (GIVEN) ---
+# --- HTTP Endpoint ---
 
 class HarnessHandler(BaseHTTPRequestHandler):
     """HTTP handler that accepts POST /chat and returns agent responses."""
@@ -301,7 +291,7 @@ class HarnessHandler(BaseHTTPRequestHandler):
         self.end_headers()
         self.wfile.write(json.dumps({"response": response}).encode())
 
-        # Stage 3 — if the agent rewrote its own source, restart with the new code
+        # If the agent rewrote its own source, restart with the new code
         if source_has_changed():
             print('harness.py was modified — restarting with the new code...')
             os.execv(sys.executable, [sys.executable, SOURCE_FILE])
